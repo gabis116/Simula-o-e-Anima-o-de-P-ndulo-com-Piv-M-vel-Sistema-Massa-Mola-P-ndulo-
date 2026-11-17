@@ -1,0 +1,74 @@
+import numpy as np
+import scipy.linalg as la
+import scipy.integrate as spi
+import matplotlib.pyplot as plt
+import matplotlib.animation as anim
+
+g = 9.81  # m/s²
+m = 3  # kg
+k = 10  # N / m
+L0 = 2  # m
+L = 3  # m
+
+w02 = k / m
+w0 = np.sqrt(w02)
+
+# sistema de EDOS de 1ª ordem:
+def dois_pendulos_mola(Y, t):
+    x, th, vx, vth = Y
+
+    M = np.array([[L          , -L * np.cos(th)],
+                  [-np.cos(th),  L]])
+    b = np.array([L * vth * np.sin(th) - 2 - w02 * x,
+                  -g * np.sin(th)])
+    dx = vx
+    dth = vth
+    dvx, dvth = la.solve(M, b)
+    return [dx, dth, dvx, dvth]
+
+# condição inicial:
+x0, vx0, th0, vth0 = .5, np.radians(40), -1, 0
+Y0 = [x0, vx0, th0, vth0]
+
+# tempo:
+tmin, tmax, h = 0, 30, 0.01
+t = np.arange(tmin, tmax+h, h)
+
+# solução com odeint:
+Y = spi.odeint(dois_pendulos_mola, Y0, t)
+
+# separando as incógnitas:
+x, th, vx, vth1 = Y.T
+
+# posição da massa:
+xm = x + L * np.sin(th)
+ym = -L * np.cos(th)
+
+# gráfico:
+fig = plt.figure()
+ax = plt.axes().set_aspect('equal')
+
+plt.xlim(1.1*xm.min(), 1.1*xm.max())
+plt.ylim(1.1*ym.min(), 1.1*ym.max() if ym.max() > 0 else .01)
+
+plt.axhline(0, color='k')
+plt.axvline(0, color='k')
+
+bola, = plt.plot([], [], 'o-r')  # inicialização da bola 1
+traj, = plt.plot([], [], '-b')  # inicialização da bola 1
+
+# função de atualização:
+def update(n):
+    bola.set_data([x[n], xm[n]], [0, ym[n]])
+    traj.set_data(xm[:n], ym[:n])
+    # bola2.set_data([L0, x2[n]], [0, y2[n]])
+    # traj1.set_data(x1[:n], y1[:n])
+    # traj2.set_data(x2[:n], y2[:n])
+    # mola.set_data([x1[n], x2[n]], [y1[n], y2[n]])
+    return bola, traj
+
+# controle da animação:
+a = anim.FuncAnimation(fig, update, blit=True, frames=t.size, interval=5)
+
+plt.tight_layout()
+plt.show()
