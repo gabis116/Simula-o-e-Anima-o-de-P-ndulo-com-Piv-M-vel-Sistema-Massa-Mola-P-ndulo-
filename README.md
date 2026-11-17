@@ -1,0 +1,1 @@
+# Simula-o-e-Anima-o-de-P-ndulo-com-Piv-M-vel-Sistema-Massa-Mola-P-ndulo-
